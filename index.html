@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Water Llama — Cognitive Performance System</title>
+  <meta name="description" content="Water Llama — hydration-driven cognitive performance dashboard." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    button,
+    input,
+    select {
+      font-family: inherit;
+      border: none;
+      background: none;
+      cursor: pointer;
+      outline: none
+    }
+
+    :root {
+      --bg: #07090F;
+      --s1: #10131A;
+      --s2: #171B26;
+      --s3: #1E2333;
+      --b1: #1F2436;
+      --b2: #2A3047;
+      --t1: #F0F2F8;
+      --t2: #8B91A8;
+      --t3: #4A5068;
+      --cyan: #00D4FF;
+      --cyan2: #38BDF8;
+      --cyanG: rgba(0, 212, 255, .15);
+      --amber: #F59E0B;
+      --amberG: rgba(245, 158, 11, .15);
+      --red: #F87171;
+      --redG: rgba(248, 113, 113, .15);
+      --green: #10B981;
+      --r: 16px;
+      --rs: 10px;
+      --ease: cubic-bezier(.4, 0, .2, 1);
+      --dur: 320ms
+    }
+
+    html,
+    body {
+      height: 100%;
+      -webkit-font-smoothing: antialiased
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    /* LAYOUT */
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 500px;
+      padding: 0 16px 90px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0 6px
+    }
+
+    .logo {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -.2px
+    }
+
+    .logo span {
+      color: var(--cyan)
+    }
+
+    .header-r {
+      display: flex;
+      gap: 8px
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--s2);
+      border: 1px solid var(--b1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--t2);
+      transition: all var(--dur) var(--ease)
+    }
+
+    .icon-btn:hover {
+      background: var(--b1);
+      color: var(--t1)
+    }
+
+    .icon-btn:active {
+      transform: scale(.93)
+    }
+
+    /* TABS */
+    .tab-bar {
+      display: flex;
+      gap: 6px;
+      background: var(--s1);
+      border: 1px solid var(--b1);
+      border-radius: 12px;
+      padding: 4px
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 9px 0;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--t3);
+      letter-spacing: .3px;
+      transition: all var(--dur) var(--ease)
+    }
+
+    .tab-btn.active {
+      background: var(--s2);
+      color: var(--cyan);
+      border: 1px solid var(--cyanG)
+    }
+
+    .tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 14px
+    }
+
+    .tab-pane.active {
+      display: flex
+    }
+
+    /* CARD */
+    .card {
+      background: var(--s1);
+      border: 1px solid var(--b1);
+      border-radius: var(--r);
+      padding: 20px
+    }
+
+    /* CRI HERO */
+    .cri-card {
+      background: var(--s1);
+      border: 1px solid var(--b1);
+      border-radius: var(--r);
+      padding: 28px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .cri-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, var(--cyanG), transparent 65%);
+      pointer-events: none
+    }
+
+    .cri-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--t3)
+    }
+
+    .cri-num {
+      font-size: 80px;
+      font-weight: 800;
+      letter-spacing: -4px;
+      line-height: 1;
+      transition: color .4s var(--ease)
+    }
+
+    .cri-num.high {
+      color: var(--cyan)
+    }
+
+    .cri-num.mid {
+      color: var(--amber)
+    }
+
+    .cri-num.low {
+      color: var(--red)
+    }
+
+    .cri-status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px
+    }
+
+    .cri-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: background .4s
+    }
+
+    .cri-status-lbl {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: .2px;
+      transition: color .4s var(--ease)
+    }
+
+    .cri-bars {
+      width: 100%;
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px
+    }
+
+    .cri-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .cbl {
+      font-size: 11px;
+      color: var(--t2);
+      width: 68px;
+      flex-shrink: 0
+    }
+
+    .cbt {
+      flex: 1;
+      height: 3px;
+      background: var(--b1);
+      border-radius: 2px;
+      overflow: hidden
+    }
+
+    .cbt-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .4s var(--ease)
+    }
+
+    .cbv {
+      font-size: 11px;
+      color: var(--t2);
+      width: 32px;
+      text-align: right
+    }
+
+    /* RING */
+    .ring-wrap {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      flex-shrink: 0
+    }
+
+    .ring-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg)
+    }
+
+    .ring-track {
+      fill: none;
+      stroke: var(--s3);
+      stroke-width: 8
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke: url(#rg);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 471;
+      stroke-dashoffset: 471;
+      transition: stroke-dashoffset .4s var(--ease);
+      filter: drop-shadow(0 0 6px rgba(0, 212, 255, .4))
+    }
+
+    .ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      pointer-events: none
+    }
+
+    .ring-pct {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: var(--t1)
+    }
+
+    .ring-ml {
+      font-size: 12px;
+      color: var(--t2);
+      font-weight: 500
+    }
+
+    .ring-goal {
+      font-size: 10px;
+      color: var(--t3);
+      text-transform: uppercase;
+      letter-spacing: .6px
+    }
+
+    /* HYDRATION SECTION */
+    .hydration-row {
+      display: flex;
+      align-items: center;
+      gap: 20px
+    }
+
+    .hydration-info {
+      flex: 1
+    }
+
+    .hydration-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--t2);
+      margin-bottom: 10px;
+      letter-spacing: .2px
+    }
+
+    /* CHIPS */
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      width: 100%
+    }
+
+    .chip {
+      flex: 1;
+      padding: 10px 6px;
+      border-radius: var(--rs);
+      border: 1px solid var(--b2);
+      background: var(--s2);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--t2);
+      text-align: center;
+      transition: all var(--dur) var(--ease)
+    }
+
+    .chip:hover {
+      background: var(--b2);
+      color: var(--t1);
+      border-color: var(--cyan2)
+    }
+
+    .chip:active {
+      transform: scale(.95);
+      background: var(--cyanG);
+      color: var(--cyan);
+      border-color: var(--cyan)
+    }
+
+    /* PRIMARY BTN */
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--cyan);
+      border-radius: 28px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #07090F;
+      letter-spacing: .1px;
+      transition: all var(--dur) var(--ease)
+    }
+
+    .btn-primary:hover {
+      background: var(--cyan2);
+      box-shadow: 0 0 22px rgba(0, 212, 255, .3)
+    }
+
+    .btn-primary:active {
+      transform: scale(.97)
+    }
+
+    /* LOG PANEL */
+    .log-panel {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height .35s var(--ease), opacity .3s var(--ease)
+    }
+
+    .log-panel.open {
+      max-height: 120px;
+      opacity: 1
+    }
+
+    .log-inner {
+      padding-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .custom-row {
+      display: flex;
+      gap: 8px
+    }
+
+    .custom-inp {
+      flex: 1;
+      background: var(--s2);
+      border: 1px solid var(--b2);
+      border-radius: var(--rs);
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--t1);
+      transition: border-color var(--dur) var(--ease)
+    }
+
+    .custom-inp::placeholder {
+      color: var(--t3)
+    }
+
+    .custom-inp:focus {
+      border-color: var(--cyan2)
+    }
+
+    .btn-log {
+      padding: 10px 18px;
+      border-radius: var(--rs);
+      background: var(--cyan);
+      color: #07090F;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all var(--dur) var(--ease)
+    }
+
+    .btn-log:hover {
+      background: var(--cyan2)
+    }
+
+    .btn-log:active {
+      transform: scale(.95)
+    }
+
+    .btn-undo {
+      width: 100%;
+      padding: 9px;
+      border-radius: var(--rs);
+      border: 1px solid var(--b2);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--t3);
+      transition: all var(--dur) var(--ease)
+    }
+
+    .btn-undo:hover {
+      color: var(--red);
+      border-color: var(--red)
+    }
+
+    .btn-undo:active {
+      transform: scale(.97)
+    }
+
+    /* SLIDERS */
+    .slider-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .slider-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .slider-lbl {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--t2);
+      letter-spacing: .2px
+    }
+
+    .slider-val {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.5px;
+      color: var(--cyan)
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 3px;
+      background: var(--b1);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--cyan);
+      border: 2px solid var(--s1);
+      box-shadow: 0 0 8px rgba(0, 212, 255, .4);
+      cursor: pointer;
+      transition: transform .15s
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15)
+    }
+
+    /* DISCIPLINE CHAIN */
+    .chain-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .chain-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--t3)
+    }
+
+    .chain-count {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--cyan)
+    }
+
+    .chain-sub {
+      font-size: 11px;
+      color: var(--t3);
+      font-weight: 500
+    }
+
+    .chain-dots {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px
+    }
+
+    .chain-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid var(--b2);
+      background: var(--s2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--t3);
+      transition: all var(--dur) var(--ease)
+    }
+
+    .chain-dot.met {
+      background: var(--cyanG);
+      border-color: var(--cyan);
+      color: var(--cyan)
+    }
+
+    .chain-dot.today {
+      border-color: var(--cyan2)
+    }
+
+    /* STATS ROW */
+    .stats-row {
+      display: flex;
+      gap: 10px
+    }
+
+    .stat-box {
+      flex: 1;
+      background: var(--s1);
+      border: 1px solid var(--b1);
+      border-radius: var(--rs);
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px
+    }
+
+    .stat-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--t3)
+    }
+
+    .stat-val {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -.5px;
+      color: var(--t1)
+    }
+
+    .stat-val.accent {
+      color: var(--cyan)
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--t3)
+    }
+
+    /* INSIGHTS */
+    .ins-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .ins-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--t1)
+    }
+
+    .ins-sub {
+      font-size: 11px;
+      color: var(--t3);
+      margin-bottom: 12px
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 180px
+    }
+
+    .p-gate {
+      position: relative;
+      border-radius: var(--r);
+      overflow: hidden
+    }
+
+    .p-overlay {
+      position: absolute;
+      inset: 0;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      background: rgba(7, 9, 15, .75);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      z-index: 2;
+      border-radius: var(--r)
+    }
+
+    .p-badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--amber);
+      border: 1px solid var(--amber);
+      border-radius: 20px;
+      padding: 4px 10px
+    }
+
+    .p-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      color: var(--t1)
+    }
+
+    .p-desc {
+      font-size: 12px;
+      color: var(--t2);
+      text-align: center;
+      max-width: 220px;
+      line-height: 1.6
+    }
+
+    .btn-unlock {
+      padding: 11px 24px;
+      background: var(--cyan);
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #07090F;
+      transition: all var(--dur) var(--ease)
+    }
+
+    .btn-unlock:hover {
+      background: var(--cyan2);
+      box-shadow: 0 0 18px rgba(0, 212, 255, .3)
+    }
+
+    /* SECTION LABEL */
+    .sec-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--t3);
+      margin-bottom: -6px;
+      padding: 0 2px
+    }
+
+    /* TOAST */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--s2);
+      border: 1px solid var(--b2);
+      border-radius: 100px;
+      padding: 11px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--t2);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s var(--ease), transform .3s var(--ease);
+      white-space: nowrap;
+      z-index: 300;
+      max-width: 90vw;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0)
+    }
+
+    #toast.perf {
+      border-color: rgba(0, 212, 255, .3);
+      color: var(--t1)
+    }
+
+    /* DRAWER */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s var(--ease)
+    }
+
+    .overlay.open {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .drawer {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      width: 100%;
+      max-width: 500px;
+      background: var(--s1);
+      border-top: 1px solid var(--b1);
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px 40px;
+      z-index: 101;
+      transition: transform .38s var(--ease);
+      display: flex;
+      flex-direction: column;
+      gap: 18px
+    }
+
+    .drawer.open {
+      transform: translateX(-50%) translateY(0)
+    }
+
+    .drawer-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--b2);
+      border-radius: 2px;
+      margin: 0 auto -4px
+    }
+
+    .drawer-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -.3px
+    }
+
+    .set-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px
+    }
+
+    .set-lbl span:first-child {
+      font-size: 14px;
+      font-weight: 600;
+      display: block
+    }
+
+    .set-lbl span:last-child {
+      font-size: 12px;
+      color: var(--t3);
+      display: block
+    }
+
+    .num-inp {
+      width: 96px;
+      text-align: right;
+      background: var(--s2);
+      border: 1px solid var(--b2);
+      border-radius: var(--rs);
+      padding: 9px 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--t1);
+      transition: border-color var(--dur) var(--ease)
+    }
+
+    .num-inp:focus {
+      border-color: var(--cyan2)
+    }
+
+    .sel {
+      background: var(--s2);
+      border: 1px solid var(--b2);
+      border-radius: var(--rs);
+      padding: 9px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--t1);
+      cursor: pointer;
+      transition: border-color var(--dur) var(--ease)
+    }
+
+    .sel:focus {
+      border-color: var(--cyan2);
+      outline: none
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--b1)
+    }
+
+    /* Toggle */
+    .tog {
+      position: relative;
+      width: 46px;
+      height: 26px;
+      flex-shrink: 0;
+      cursor: pointer
+    }
+
+    .tog input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute
+    }
+
+    .tog-track {
+      position: absolute;
+      inset: 0;
+      background: var(--s2);
+      border: 1px solid var(--b2);
+      border-radius: 13px;
+      transition: all var(--dur)
+    }
+
+    .tog input:checked~.tog-track {
+      background: var(--cyan);
+      border-color: var(--cyan)
+    }
+
+    .tog-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform var(--dur) var(--ease);
+      pointer-events: none;
+      z-index: 1
+    }
+
+    .tog input:checked~.tog-knob {
+      transform: translateX(20px)
+    }
+
+    .btn-reset {
+      padding: 11px;
+      border-radius: var(--rs);
+      border: 1px solid var(--b2);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--red);
+      transition: all var(--dur) var(--ease)
+    }
+
+    .btn-reset:hover {
+      background: var(--redG)
+    }
+
+    .btn-reset:active {
+      transform: scale(.97)
+    }
+
+    @media(max-width:400px) {
+      .cri-num {
+        font-size: 64px
+      }
+
+      .ring-wrap {
+        width: 140px;
+        height: 140px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="shell">
+
+      <!-- HEADER -->
+      <header>
+        <div class="logo">Water<span>Llama</span></div>
+        <div class="header-r">
+          <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- TABS -->
+      <div class="tab-bar" role="tablist">
+        <button class="tab-btn active" id="tabDash" role="tab" aria-selected="true">Dashboard</button>
+        <button class="tab-btn" id="tabIns" role="tab" aria-selected="false">Insights</button>
+      </div>
+
+      <!-- ══════════════════════════════ DASHBOARD ══════════════════════════════ -->
+      <div class="tab-pane active" id="paneDash">
+
+        <!-- CRI CARD -->
+        <div class="cri-card" id="criCard">
+          <div class="cri-eyebrow">Cognitive Readiness Index</div>
+          <div class="cri-num high" id="criNum">—</div>
+          <div class="cri-status-row">
+            <div class="cri-dot" id="criDot"></div>
+            <div class="cri-status-lbl" id="criStatusLbl">Calculating…</div>
+          </div>
+          <div class="cri-bars">
+            <div class="cri-bar-row"><span class="cbl">Hydration</span>
+              <div class="cbt">
+                <div class="cbt-fill" id="barHydro" style="background:var(--cyan)"></div>
+              </div><span class="cbv" id="bvHydro">—</span>
+            </div>
+            <div class="cri-bar-row"><span class="cbl">Recency</span>
+              <div class="cbt">
+                <div class="cbt-fill" id="barRec" style="background:var(--cyan2)"></div>
+              </div><span class="cbv" id="bvRec">—</span>
+            </div>
+            <div class="cri-bar-row"><span class="cbl">Focus</span>
+              <div class="cbt">
+                <div class="cbt-fill" id="barFocus" style="background:var(--amber)"></div>
+              </div><span class="cbv" id="bvFocus">—</span>
+            </div>
+            <div class="cri-bar-row"><span class="cbl">Energy</span>
+              <div class="cbt">
+                <div class="cbt-fill" id="barEnergy" style="background:var(--green)"></div>
+              </div><span class="cbv" id="bvEnergy">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PERFORMANCE CHECK-IN -->
+        <div class="sec-lbl">Performance Check-In</div>
+        <div class="card">
+          <div class="slider-section">
+            <div class="slider-row">
+              <div class="slider-hdr"><span class="slider-lbl">Focus Level</span><span class="slider-val"
+                  id="focusVal">5</span></div>
+              <input type="range" id="focusSlider" min="1" max="10" value="5" aria-label="Focus level" />
+            </div>
+            <div class="slider-row">
+              <div class="slider-hdr"><span class="slider-lbl">Energy Level</span><span class="slider-val"
+                  id="energyVal">5</span></div>
+              <input type="range" id="energySlider" min="1" max="10" value="5" aria-label="Energy level" />
+            </div>
+          </div>
+        </div>
+
+        <!-- HYDRATION -->
+        <div class="sec-lbl">Hydration</div>
+        <div class="card">
+          <div class="hydration-row">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 160 160" aria-hidden="true">
+                <defs>
+                  <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#00D4FF" />
+                    <stop offset="100%" stop-color="#38BDF8" />
+                  </linearGradient>
+                </defs>
+                <circle class="ring-track" cx="80" cy="80" r="75" />
+                <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="75" />
+              </svg>
+              <div class="ring-center">
+                <div class="ring-pct" id="ringPct">0%</div>
+                <div class="ring-ml" id="ringMl">0 ml</div>
+                <div class="ring-goal" id="ringGoal">of 2000</div>
+              </div>
+            </div>
+            <div class="hydration-info">
+              <div class="hydration-title">Daily Intake</div>
+              <div class="chip-row">
+                <button class="chip" data-ml="250">250</button>
+                <button class="chip" data-ml="500">500</button>
+                <button class="chip" data-ml="750">750</button>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+            <button class="btn-primary" id="addBtn">+ Add Water</button>
+            <div class="log-panel" id="logPanel">
+              <div class="log-inner">
+                <div class="custom-row">
+                  <input class="custom-inp" id="customInp" type="number" min="1" max="5000"
+                    placeholder="Custom amount (ml)" />
+                  <button class="btn-log" id="logBtn">Log</button>
+                </div>
+              </div>
+            </div>
+            <button class="btn-undo" id="undoBtn">Undo last entry</button>
+          </div>
+        </div>
+
+        <!-- DISCIPLINE CHAIN -->
+        <div class="sec-lbl">Discipline Chain</div>
+        <div class="card">
+          <div class="chain-row">
+            <div>
+              <div class="chain-lbl">Current Streak</div>
+              <div class="chain-count" id="chainCount">0</div>
+              <div class="chain-sub" id="chainSub">days</div>
+            </div>
+            <div style="text-align:right">
+              <div class="chain-lbl">7-Day Record</div>
+              <div style="font-size:22px;font-weight:700;color:var(--t1)" id="weekRecord">0 / 7</div>
+              <div class="chain-sub">days goal met</div>
+            </div>
+          </div>
+          <div class="chain-dots" id="chainDots"></div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-lbl">Glasses</div>
+            <div class="stat-val accent" id="statGlasses">0</div>
+            <div class="stat-sub">logged today</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">Remaining</div>
+            <div class="stat-val" id="statRemain">2000</div>
+            <div class="stat-sub">ml to goal</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">Last Drink</div>
+            <div class="stat-val" id="statLast">—</div>
+            <div class="stat-sub">mins ago</div>
+          </div>
+        </div>
+
+      </div><!-- /paneDash -->
+
+      <!-- ══════════════════════════════ INSIGHTS ══════════════════════════════ -->
+      <div class="tab-pane" id="paneIns">
+
+        <!-- CRI TREND (free preview) -->
+        <div class="card">
+          <div class="ins-header">
+            <div class="ins-title">7-Day CRI Trend</div>
+          </div>
+          <div class="ins-sub">Cognitive readiness over the past week</div>
+          <div class="chart-wrap"><canvas id="chartCRI"></canvas></div>
+        </div>
+
+        <!-- PREMIUM GATE SECTION -->
+        <div class="p-gate">
+          <div style="display:flex;flex-direction:column;gap:14px;filter:blur(3px);pointer-events:none"
+            aria-hidden="true">
+            <div class="card">
+              <div class="ins-title">Hydration vs Focus</div>
+              <div class="ins-sub">Correlation between intake and focus scores</div>
+              <div class="chart-wrap"><canvas id="chartHF"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="ins-title">Hydration vs Productivity</div>
+              <div class="ins-sub">Self-rated output vs daily hydration %</div>
+              <div class="chart-wrap"><canvas id="chartHP"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="ins-title">Low-Performance Windows</div>
+              <div class="ins-sub">Predicted dip windows based on hydration gaps</div>
+              <div class="chart-wrap"><canvas id="chartLow"></canvas></div>
+            </div>
+          </div>
+          <div class="p-overlay">
+            <div class="p-badge">Premium</div>
+            <div class="p-title">Unlock Advanced Insights</div>
+            <div class="p-desc">Access correlation charts, performance predictions, and weekly trend reports.</div>
+            <button class="btn-unlock">Unlock Insights</button>
+          </div>
+        </div>
+
+      </div><!-- /paneIns -->
+
+    </div><!-- /shell -->
+  </div><!-- /app -->
+
+  <!-- TOAST -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- SETTINGS DRAWER -->
+  <div class="overlay" id="overlay"></div>
+  <div class="drawer" id="drawer" role="dialog" aria-label="Settings">
+    <div class="drawer-handle"></div>
+    <div class="drawer-title">Settings</div>
+    <div class="set-row">
+      <div class="set-lbl"><span>Daily Goal</span><span>Target intake (ml)</span></div>
+      <input class="num-inp" id="goalInp" type="number" min="500" max="10000" step="100" value="2000" />
+    </div>
+    <div class="divider"></div>
+    <div class="set-row">
+      <div class="set-lbl"><span>Reminders</span><span>Performance alerts</span></div>
+      <label class="tog"><input type="checkbox" id="remTog" />
+        <div class="tog-track"></div>
+        <div class="tog-knob"></div>
+      </label>
+    </div>
+    <div class="set-row" id="intRow">
+      <div class="set-lbl"><span>Interval</span><span>How often</span></div>
+      <select class="sel" id="intSel">
+        <option value="30">30 min</option>
+        <option value="60" selected>60 min</option>
+        <option value="90">90 min</option>
+        <option value="120">120 min</option>
+      </select>
+    </div>
+    <div class="divider"></div>
+    <button class="btn-reset" id="resetBtn">Reset today's log</button>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ── Constants ──────────────────────────────────────────────────
+      const CIRC = 2 * Math.PI * 75; // r=75
+      const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+      const PERF_MSGS = [
+        'Hydrate now to maintain Cognitive Readiness.',
+        'Energy dip predicted in 60 minutes. Drink water.',
+        'You are below optimal hydration for peak focus.',
+        'CRI is declining. A short hydration break restores output.',
+        'Consistent hydration supports sustained performance.'
+      ];
+
+      // ── DOM ────────────────────────────────────────────────────────
+      const $ = id => document.getElementById(id);
+      const criNum = $('criNum'), criDot = $('criDot'), criStatusLbl = $('criStatusLbl');
+      const barHydro = $('barHydro'), barRec = $('barRec'), barFocus = $('barFocus'), barEnergy = $('barEnergy');
+      const bvHydro = $('bvHydro'), bvRec = $('bvRec'), bvFocus = $('bvFocus'), bvEnergy = $('bvEnergy');
+      const ringFill = $('ringFill'), ringPct = $('ringPct'), ringMl = $('ringMl'), ringGoal = $('ringGoal');
+      const focusSlider = $('focusSlider'), energySlider = $('energySlider');
+      const focusVal = $('focusVal'), energyVal = $('energyVal');
+      const addBtn = $('addBtn'), logPanel = $('logPanel'), customInp = $('customInp'), logBtn = $('logBtn'), undoBtn = $('undoBtn');
+      const chainCount = $('chainCount'), chainSub = $('chainSub'), chainDots = $('chainDots'), weekRecord = $('weekRecord');
+      const statGlasses = $('statGlasses'), statRemain = $('statRemain'), statLast = $('statLast');
+      const toast = $('toast'), settingsBtn = $('settingsBtn'), overlay = $('overlay'), drawer = $('drawer');
+      const goalInp = $('goalInp'), remTog = $('remTog'), intSel = $('intSel'), intRow = $('intRow'), resetBtn = $('resetBtn');
+
+      // ── State ──────────────────────────────────────────────────────
+      let S = load();
+      let panelOpen = false, toastTimer = null, remTimer = null;
+      let prevCRI = null;
+      let lastTickMin = 0;
+
+      function load() {
+        try {
+          const d = JSON.parse(localStorage.getItem('wl2') || '{}');
+          return {
+            intake: d.intake ?? 0,
+            goal: d.goal ?? 2000,
+            glasses: d.glasses ?? 0,
+            log: Array.isArray(d.log) ? d.log : [],
+            streak: d.streak ?? 0,
+            lastDate: d.lastDate ?? '',
+            weekDays: Array.isArray(d.weekDays) ? d.weekDays : Array(7).fill(false),
+            focus: d.focus ?? 5,
+            energy: d.energy ?? 5,
+            lastDrink: d.lastDrink ?? null,
+            criHist: Array.isArray(d.criHist) ? d.criHist : Array(7).fill(null),
+            remOn: d.remOn ?? false,
+            remInt: d.remInt ?? 60,
+          };
+        } catch { return { intake: 0, goal: 2000, glasses: 0, log: [], streak: 0, lastDate: '', weekDays: Array(7).fill(false), focus: 5, energy: 5, lastDrink: null, criHist: Array(7).fill(null), remOn: false, remInt: 60 }; }
+      }
+      function save() { localStorage.setItem('wl2', JSON.stringify(S)); }
+      function today() { return new Date().toLocaleDateString('en-CA'); }
+
+      // ── Day boundary ───────────────────────────────────────────────
+      function checkDay() {
+        const t = today();
+        if (S.lastDate === t) return;
+        if (S.lastDate) {
+          const prev = new Date(); prev.setDate(prev.getDate() - 1);
+          const yd = prev.toLocaleDateString('en-CA');
+          if (S.lastDate === yd && S.intake >= S.goal) S.streak++;
+          else if (S.lastDate !== yd) S.streak = 0;
+          // Save yesterday's CRI to history
+          const cri = calcCRI();
+          S.criHist.shift(); S.criHist.push(Math.round(cri.total));
+        }
+        S.intake = 0; S.glasses = 0; S.log = []; S.lastDrink = null;
+        // Weekly record
+        const dow = new Date().getDay();
+        const fresh = Array(7).fill(false);
+        for (let i = 0; i < dow; i++) fresh[i] = S.weekDays[i];
+        S.weekDays = fresh;
+        S.lastDate = t;
+        save();
+      }
+
+      // ── CRI Calculation ────────────────────────────────────────────
+      function calcCRI() {
+        const hPct = Math.min(S.intake / S.goal, 1);
+        const hydro = hPct * 40;
+        let recency = 20;
+        if (S.lastDrink) {
+          const mins = (Date.now() - S.lastDrink) / 60000;
+          recency = Math.max(0, 20 - (mins / 180) * 20);
+        } else { recency = 0; }
+        const focus = (S.focus / 10) * 20;
+        const energy = (S.energy / 10) * 20;
+        const total = Math.round(hydro + recency + focus + energy);
+        return { hydro: Math.round(hydro), recency: Math.round(recency), focus: Math.round(focus), energy: Math.round(energy), total: Math.min(total, 100) };
+      }
+
+      // ── Render ─────────────────────────────────────────────────────
+      function render() {
+        const cri = calcCRI();
+        const total = cri.total;
+
+        // CRI number
+        criNum.textContent = total;
+        criNum.className = 'cri-num ' + (total >= 70 ? 'high' : total >= 40 ? 'mid' : 'low');
+
+        // Neural Energy Status
+        let status, color;
+        if (prevCRI === null || total === prevCRI) { status = 'Stable'; color = '#38BDF8'; }
+        else if (total > prevCRI) { status = 'Rising'; color = '#10B981'; }
+        else { status = 'Declining'; color = '#F87171'; }
+        criStatusLbl.textContent = status;
+        criStatusLbl.style.color = color;
+        criDot.style.background = color;
+        prevCRI = total;
+
+        // Contribution bars
+        function setBar(el, val, elv, max) { el.style.width = (val / max * 100) + '%'; elv.textContent = val; }
+        setBar(barHydro, cri.hydro, bvHydro, 40);
+        setBar(barRec, cri.recency, bvRec, 20);
+        setBar(barFocus, cri.focus, bvFocus, 20);
+        setBar(barEnergy, cri.energy, bvEnergy, 20);
+
+        // Ring
+        const pct = Math.min(S.intake / S.goal, 1);
+        const pctR = Math.round(pct * 100);
+        ringFill.style.strokeDashoffset = CIRC - (pct * CIRC);
+        ringPct.textContent = pctR + '%';
+        ringMl.textContent = S.intake + ' ml';
+        ringGoal.textContent = 'of ' + S.goal;
+
+        // Stats
+        statGlasses.textContent = S.glasses;
+        statRemain.textContent = Math.max(0, S.goal - S.intake);
+        if (S.lastDrink) { const m = Math.round((Date.now() - S.lastDrink) / 60000); statLast.textContent = m < 1 ? '<1' : m; }
+        else { statLast.textContent = '—'; }
+
+        // Chain
+        chainCount.textContent = S.streak;
+        const metCount = S.weekDays.filter(Boolean).length + (S.intake >= S.goal ? 1 : 0);
+        weekRecord.textContent = Math.min(metCount, 7) + ' / 7';
+        renderDots();
+
+        // Sliders
+        focusSlider.value = S.focus; focusVal.textContent = S.focus;
+        energySlider.value = S.energy; energyVal.textContent = S.energy;
+      }
+
+      function renderDots() {
+        chainDots.innerHTML = '';
+        const dow = new Date().getDay();
+        for (let i = 0; i < 7; i++) {
+          const d = document.createElement('div');
+          d.className = 'chain-dot';
+          d.textContent = DAYS[i];
+          if (i < dow && S.weekDays[i]) d.classList.add('met');
+          if (i === dow) { d.classList.add('today'); if (S.intake >= S.goal) d.classList.add('met'); }
+          chainDots.appendChild(d);
+        }
+      }
+
+      // ── Logging ────────────────────────────────────────────────────
+      function logWater(ml) {
+        if (!ml || ml <= 0) return;
+        S.intake += ml; S.glasses++; S.log.push(ml);
+        S.lastDrink = Date.now(); S.lastDate = today();
+        if (S.intake >= S.goal && S.intake - ml < S.goal) { S.streak++; toast_('Goal reached. Optimal hydration achieved.'); }
+        save(); render();
+      }
+      function undoLast() {
+        if (!S.log.length) { toast_('Nothing to undo.'); return; }
+        const last = S.log.pop();
+        S.intake = Math.max(0, S.intake - last);
+        S.glasses = Math.max(0, S.glasses - 1);
+        if (S.intake < S.goal && S.intake + last >= S.goal && S.streak > 0) S.streak--;
+        save(); render(); toast_('Last entry removed.');
+      }
+
+      // ── Toast ──────────────────────────────────────────────────────
+      let _tq = [];
+      function toast_(msg, type = '') { _tq.push({ msg, type }); if (_tq.length === 1) _nt(); }
+      function _nt() {
+        if (!_tq.length) return;
+        const { msg, type } = _tq[0];
+        toast.textContent = msg; toast.className = type ? 'show ' + type : 'show';
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => { _tq.shift(); _nt(); }, 350);
+        }, 3000);
+      }
+
+      // ── Buttons ────────────────────────────────────────────────────
+      document.querySelectorAll('.chip').forEach(b => {
+        b.addEventListener('click', () => { const ml = +b.dataset.ml; logWater(ml); toast_(ml + ' ml logged.'); });
+      });
+
+      addBtn.addEventListener('click', () => {
+        panelOpen = !panelOpen;
+        logPanel.classList.toggle('open', panelOpen);
+        addBtn.textContent = panelOpen ? '— Close' : '+ Add Water';
+        if (panelOpen) setTimeout(() => customInp.focus(), 360);
+      });
+
+      function logCustom() {
+        const ml = parseInt(customInp.value, 10);
+        if (!ml || ml <= 0) { toast_('Enter a valid amount.'); return; }
+        logWater(ml); toast_(ml + ' ml logged.'); customInp.value = '';
+      }
+      logBtn.addEventListener('click', logCustom);
+      customInp.addEventListener('keydown', e => { if (e.key === 'Enter') logCustom(); });
+      undoBtn.addEventListener('click', undoLast);
+
+      // Sliders
+      focusSlider.addEventListener('input', () => { S.focus = +focusSlider.value; focusVal.textContent = S.focus; save(); render(); });
+      energySlider.addEventListener('input', () => { S.energy = +energySlider.value; energyVal.textContent = S.energy; save(); render(); });
+
+      // ── Tabs ───────────────────────────────────────────────────────
+      $('tabDash').addEventListener('click', () => switchTab('Dash'));
+      $('tabIns').addEventListener('click', () => switchTab('Ins'));
+      function switchTab(name) {
+        ['Dash', 'Ins'].forEach(n => {
+          $('tab' + n).classList.toggle('active', n === name);
+          $('tab' + n).setAttribute('aria-selected', n === name);
+          $('pane' + n).classList.toggle('active', n === name);
+        });
+        if (name === 'Ins') renderCharts();
+      }
+
+      // ── Settings ───────────────────────────────────────────────────
+      settingsBtn.addEventListener('click', openDrawer);
+      overlay.addEventListener('click', closeDrawer);
+      function openDrawer() {
+        goalInp.value = S.goal; remTog.checked = S.remOn; intSel.value = S.remInt;
+        intRow.style.opacity = S.remOn ? '1' : '0.4';
+        drawer.classList.add('open'); overlay.classList.add('open');
+      }
+      function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); }
+      goalInp.addEventListener('change', () => { const v = +goalInp.value; if (v >= 500 && v <= 10000) { S.goal = v; save(); render(); } });
+      remTog.addEventListener('change', () => { S.remOn = remTog.checked; intRow.style.opacity = S.remOn ? '1' : '0.4'; save(); schedRem(); if (S.remOn) reqNotif(); });
+      intSel.addEventListener('change', () => { S.remInt = +intSel.value; save(); schedRem(); });
+      resetBtn.addEventListener('click', () => { S.intake = 0; S.glasses = 0; S.log = []; S.lastDrink = null; save(); render(); closeDrawer(); toast_("Today's log cleared."); });
+
+      // ── Reminders ──────────────────────────────────────────────────
+      function reqNotif() { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); }
+      function schedRem() {
+        clearInterval(remTimer);
+        if (!S.remOn) return;
+        remTimer = setInterval(remind, S.remInt * 60000);
+      }
+      function remind() {
+        if (S.intake >= S.goal) return;
+        const msg = PERF_MSGS[Math.floor(Math.random() * PERF_MSGS.length)];
+        toast_(msg, 'perf');
+        if ('Notification' in window && Notification.permission === 'granted')
+          new Notification('Water Llama', { body: msg, silent: true });
+      }
+
+      // ── Last-drink recency ticker ──────────────────────────────────
+      setInterval(() => {
+        if (S.lastDrink) {
+          const m = Math.round((Date.now() - S.lastDrink) / 60000);
+          if (m !== lastTickMin) { lastTickMin = m; statLast.textContent = m < 1 ? '<1' : m; const c = calcCRI(); criNum.textContent = Math.min(c.total, 100); }
+        }
+      }, 30000);
+
+      // ── Charts ────────────────────────────────────────────────────
+      let chartsBuilt = false;
+      function renderCharts() {
+        if (chartsBuilt) return;
+        chartsBuilt = true;
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const gridColor = 'rgba(255,255,255,.05)';
+        const labelColor = '#4A5068';
+        const baseOpts = {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: '#171B26', borderColor: '#2A3047', borderWidth: 1, titleColor: '#F0F2F8', bodyColor: '#8B91A8', padding: 10 } },
+          scales: {
+            x: { grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 11, family: 'Inter' } } },
+            y: { grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 11, family: 'Inter' } }, min: 0 }
+          }
+        };
+
+        // 7-Day CRI — real or demo data
+        const criData = S.criHist.map((v, i) => v === null ? Math.round(35 + Math.random() * 30) : v);
+        new Chart($('chartCRI'), {
+          type: 'line',
+          data: { labels: days, datasets: [{ data: criData, borderColor: '#00D4FF', backgroundColor: 'rgba(0,212,255,.08)', tension: .4, pointBackgroundColor: '#00D4FF', pointRadius: 4, fill: true, borderWidth: 2 }] },
+          options: { ...baseOpts, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, max: 100 } } }
+        });
+
+        // Blurred preview charts (demo data)
+        new Chart($('chartHF'), {
+          type: 'bar',
+          data: { labels: days, datasets: [{ data: [60, 70, 55, 80, 75, 65, 72], backgroundColor: 'rgba(0,212,255,.35)', borderRadius: 6, borderSkipped: false }] },
+          options: { ...baseOpts, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, max: 100 } } }
+        });
+        new Chart($('chartHP'), {
+          type: 'bar',
+          data: { labels: days, datasets: [{ data: [65, 72, 50, 85, 78, 62, 70], backgroundColor: 'rgba(245,158,11,.35)', borderRadius: 6, borderSkipped: false }] },
+          options: { ...baseOpts, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, max: 100 } } }
+        });
+        new Chart($('chartLow'), {
+          type: 'line',
+          data: { labels: ['6am', '9am', '12pm', '3pm', '6pm', '9pm'], datasets: [{ data: [20, 50, 45, 25, 60, 35], borderColor: '#F87171', backgroundColor: 'rgba(248,113,113,.12)', tension: .4, fill: true, borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#F87171' }] },
+          options: { ...baseOpts, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, max: 100 } } }
+        });
+      }
+
+      // ── Boot ───────────────────────────────────────────────────────
+      checkDay(); render(); schedRem();
+
+    })();
+  </script>
+</body>
+
+</html>
